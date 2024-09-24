@@ -1,4 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:task/auth/HomeScreen.dart';
 import 'package:task/auth/register_screen.dart';
 
 import 'AppTextField.dart';
@@ -86,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: EdgeInsets.all(40),
               child: ElevatedButton(
                 onPressed: () {
-                  // signIn();
+                 signIn();
                 },
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.purple,
@@ -114,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Don’t have an account? ',
+                    'Don’t have an account?',
                     style: TextStyle(
                         fontSize: 20,
                         color: Colors.black
@@ -148,4 +151,53 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
   }
+
+  void signIn()async{
+    if(formKey.currentState?.validate() == true){
+
+      try {
+        final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+        );
+        Fluttertoast.showToast(
+            msg: "user signed In successfully",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+            fontSize: 16.0
+        );
+        Navigator.of(context).pushNamed(HomeScreen.routeName);
+      }on FirebaseAuthException catch (e) {
+        if (e.code == 'user-not-found') {
+          Fluttertoast.showToast(
+              msg: "No user found for that email.",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              timeInSecForIosWeb: 1,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+              fontSize: 16.0
+          );
+          print('No user found for that email.');
+        } else if (e.code == 'wrong-password') {
+          Fluttertoast.showToast(
+              msg: "Wrong password provided for that user.",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              timeInSecForIosWeb: 1,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+              fontSize: 16.0
+          );
+          print('Wrong password provided for that user.');
+        }
+      }
+
+    }
+
+  }
+
 }

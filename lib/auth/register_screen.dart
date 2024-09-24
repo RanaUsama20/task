@@ -1,6 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:task/auth/AppTextField.dart';
 import 'package:task/auth/login_screen.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
 
 class RegisterScreen extends StatefulWidget{
   static String routeName = 'Register Screen';
@@ -94,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                      AppTextField(
                        fieldName: 'confirm password',
                        hintText: 'Enter your password',
-                       controller: userNameController,
+                       controller: confirmationPasswordController,
                        validator: (value){
                          if(value == null || value.trim().isEmpty){
                            return 'please enter your password';
@@ -127,7 +131,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               padding: EdgeInsets.all(40),
               child: ElevatedButton(
                 onPressed: () {
-                  // register();
+                   register();
                 },
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.purple,
@@ -188,4 +192,54 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     );
   }
+
+  void register()async{
+    if(formKey.currentState?.validate() == true){
+
+      try {
+        final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+        );
+        addUsersToCloudFirestore(userNameController.text.trim(), emailController.text.trim());
+        Fluttertoast.showToast(
+            msg: "user registered successfully",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+            fontSize: 16.0
+        );
+        Navigator.of(context).pushNamed(LoginScreen.routeName);
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'email-already-in-use') {
+          Fluttertoast.showToast(
+              msg: "The account already exists for that email.",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              timeInSecForIosWeb: 1,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+              fontSize: 16.0
+          );
+          print('The account already exists for that email.');
+        }
+      } catch (e) {
+        print(e);
+      }
+
+    }
+
+  }
+
+
+  Future addUsersToCloudFirestore(String username , String email)async{
+    await FirebaseFirestore.instance.collection('users').add({
+      'username' : username,
+       'email' : email
+    });
+  }
+
+
 }
